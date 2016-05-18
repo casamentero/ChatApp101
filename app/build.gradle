@@ -34,4 +34,10 @@ dependencies {
     compile 'com.squareup.okhttp:okhttp-urlconnection:2.2.0'
     compile 'com.squareup.picasso:picasso:2.4.0'
     compile 'io.realm:realm-android:0.87.5'
+    compile files('src/main/res/libs/commons-cli-1.1.jar')
+    compile files('src/main/res/libs/commons-io-1.2.jar')
+    compile files('src/main/res/libs/hamcrest-core.jar')
+    compile files('src/main/res/libs/junit.jar')
+    compile files('src/main/res/libs/rabbitmq-client-tests.jar')
+    compile files('src/main/res/libs/rabbitmq-client.jar')
 }
