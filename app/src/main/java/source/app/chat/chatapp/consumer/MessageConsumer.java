@@ -7,6 +7,8 @@ import android.util.Log;
 
 import com.rabbitmq.client.QueueingConsumer;
 
+import source.app.chat.chatapp.Utility.Constant;
+
 /**
 *Consumes messages from a RabbitMQ broker
 *
@@ -76,8 +78,8 @@ public class MessageConsumer extends  IConnectToRabbitMQ{
               e.printStackTrace();
               return false;
           }
-           if (MyExchangeType == "topic")
-                 AddBinding("message.user.25");//topic has default binding
+           if (MyExchangeType == Constant.Server.EXCHANGE)
+                 AddBinding(Constant.Server.ROUTING_KEY);//binding name
 
           Running = true;
           mConsumeHandler.post(mConsumeRunner);
@@ -130,6 +132,7 @@ public class MessageConsumer extends  IConnectToRabbitMQ{
                       delivery = MySubscription.nextDelivery();
                       mLastMessage = delivery.getBody();
                       Log.v("mLastMessage ", mLastMessage.toString());
+
                       mMessageHandler.post(mReturnMessage);
                       try {
                           mModel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);

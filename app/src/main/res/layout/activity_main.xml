@@ -7,17 +7,6 @@
     android:fitsSystemWindows="true"
     tools:context="source.app.chat.chatapp.MainActivity">
 
-    <ScrollView
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent" >
-
-        <TextView
-            android:id="@+id/output"
-            android:hint="user text"
-            android:textColor="@android:color/white"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent" />
-    </ScrollView>
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
