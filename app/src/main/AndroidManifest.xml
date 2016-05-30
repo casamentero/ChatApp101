@@ -2,7 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="source.app.chat.chatapp">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
+        android:name="support.source.classes.StartUp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -12,12 +15,51 @@
             android:name=".MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
+
+            <!--
+                    <intent-filter>
+                    <action android:name="android.intent.action.MAIN" />
+
+                    <category android:name="android.intent.category.LAUNCHER" />
+                </intent-filter>
+            -->
+        </activity>
+        <activity
+            android:name="login.activities.source.LoginTestOneActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="stateHidden|adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="user.list.activities.source.UserListActivity"
+            android:label="@string/title_activity_user_list"
+            android:parentActivityName="login.activities.source.LoginTestOneActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="login.activities.source.LoginTestOneActivity" />
+        </activity>
+        <activity
+            android:name="message.activity.source.MessageActivity"
+            android:label="@string/title_activity_message"
+            android:parentActivityName="user.list.activities.source.UserListActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="stateHidden|adjustPan">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="user.list.activities.source.UserListActivity" />
+        </activity>
+
+        <service
+            android:name="background.work.services.SendOutboxMessages"
+            android:exported="false" />
+        
+
     </application>
 
 </manifest>
