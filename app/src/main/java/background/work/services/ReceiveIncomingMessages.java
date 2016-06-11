@@ -92,10 +92,11 @@ public class ReceiveIncomingMessages extends IntentService {
                                 try {
                                     MessageRealm messageRealm = new MessageRealm();
                                     JSONObject jsonObject = new JSONObject(text);
-                                    messageRealm.setFrom_id(Integer.parseInt(jsonObject.getString("from_id")));
-                                    messageRealm.setTo_id(Integer.parseInt(jsonObject.getString("to_id")));
+                                    messageRealm.setId(jsonObject.getLong("id"));
+                                    messageRealm.setFrom_id(jsonObject.getLong("from_id"));
+                                    messageRealm.setTo_id(jsonObject.getLong("to_id"));
                                     messageRealm.setChat_message(jsonObject.getString("chat_message"));
-                                    messageRealm.setChat_message_id(jsonObject.getString("chat_message_id"));
+                                    messageRealm.setChat_message_id(jsonObject.getLong("chat_message_id"));
                                     messageRealm.setLanguages_id(Integer.parseInt(jsonObject.getString("languages_id")));
                                     messageRealm.setCreated_at(Integer.parseInt(jsonObject.getString("created_at")));
                                     RealmConfiguration realmConfiguration =

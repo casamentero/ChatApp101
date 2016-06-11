@@ -49,11 +49,20 @@
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <android.support.v7.widget.RecyclerView
-                        android:id="@+id/MessageActivity_messages_RecyclerView"
+                    <android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                        android:id="@+id/MessageActivity_swipeRefresh"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_weight="1" />
+                        android:layout_weight="1">
+
+                        <android.support.v7.widget.RecyclerView
+                            android:id="@+id/MessageActivity_messages_RecyclerView"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1" />
+
+                    </android.support.v4.widget.SwipeRefreshLayout>
+
                 </LinearLayout>
 
 
@@ -78,8 +87,8 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:layout_gravity="start"
-                                android:gravity="start"
                                 android:addTextChangedListener="@{messageActivityScreen.watcher}"
+                                android:gravity="start"
                                 android:text="@{messageActivityScreen.message}" />
                         </android.support.design.widget.TextInputLayout>
 

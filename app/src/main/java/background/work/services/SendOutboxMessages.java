@@ -70,7 +70,7 @@ public class SendOutboxMessages extends IntentService {
         Log.d(TAG, "onDestroy: ");
     }
 
-    Thread thread = new Thread(new Runnable() {
+    private Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
             OkHttpClient okHttpClient = new OkHttpClient();
@@ -79,18 +79,18 @@ public class SendOutboxMessages extends IntentService {
                     new RealmConfiguration.Builder(getApplicationContext()).name("MessageRealm.realm").build();
             Realm realm = Realm.getInstance(realmConfiguration);
             RealmResults<MessageRealm> messageRealms =
-                    realm.where(MessageRealm.class).equalTo("chat_message_id", "-128").findAll();
+                    realm.where(MessageRealm.class).equalTo("chat_message_id", -128).findAll();
             Log.d(TAG, "run: messageRealms.size(): " + messageRealms.size());
             for (MessageRealm messageRealm : messageRealms) {
                 Log.d(TAG, "run: send message: \n" + messageRealm.getChat_message());
                 RequestBody formBody = new FormEncodingBuilder()
-                        .add("from_id", ""+messageRealm.getFrom_id())
-                        .add("to_id", ""+messageRealm.getTo_id())
+                        .add("from_id", "" + messageRealm.getFrom_id())
+                        .add("to_id", "" + messageRealm.getTo_id())
                         .add("chat_message", messageRealm.getChat_message())
-                        .add("languages_id", ""+messageRealm.getLanguages_id())
+                        .add("languages_id", "" + messageRealm.getLanguages_id())
                         .add("rabbitmq_exchange_name", messageRealm.getRabbitmq_exchange_name())
                         .add("rabbitmq_queue_name", messageRealm.getRabbitmq_queue_name())
-                        .add("rabbitmq_routing_key",messageRealm.getRabbitmq_routing_key())
+                        .add("rabbitmq_routing_key", messageRealm.getRabbitmq_routing_key())
                         .build();
 
                 Request request = new Request.Builder()
@@ -108,8 +108,8 @@ public class SendOutboxMessages extends IntentService {
                             if (myResponse.isSuccess()) {
                                 realm.beginTransaction();
                                 if (myResponse.getData() != null) {
-                                    if (!myResponse.getData().getChat_message_id().contentEquals("")) {
-                                        Log.d(TAG, "run: make changes to "+myResponse.getData().getChat_message_id());
+                                    if (myResponse.getData().getChat_message_id() > 0) {
+                                        Log.d(TAG, "run: make changes to " + myResponse.getData().getChat_message_id());
                                         messageRealm.setChat_message_id(myResponse.getData().getChat_message_id());
                                     }
                                 }
@@ -142,6 +142,9 @@ public class SendOutboxMessages extends IntentService {
         @SerializedName("success")
         private boolean success;
 
+        @SerializedName("moredata")
+        private boolean moredata;
+
         @SerializedName("data")
         private Data data;
 
@@ -151,6 +154,14 @@ public class SendOutboxMessages extends IntentService {
 
         public void setSuccess(boolean success) {
             this.success = success;
+        }
+
+        public boolean isMoredata() {
+            return moredata;
+        }
+
+        public void setMoredata(boolean moredata) {
+            this.moredata = moredata;
         }
 
         public Data getData() {
@@ -165,14 +176,24 @@ public class SendOutboxMessages extends IntentService {
     private class Data {
 
         @SerializedName("chat_message_id")
-        private String chat_message_id;
+        private long chat_message_id;
 
-        public String getChat_message_id() {
+        public long getChat_message_id() {
             return chat_message_id;
         }
 
-        public void setChat_message_id(String chat_message_id) {
+        public void setChat_message_id(long chat_message_id) {
             this.chat_message_id = chat_message_id;
         }
     }
+
+    /*
+    {
+  "success": true,
+  "moredata": false,
+  "data": {
+             "chat_message_id": "10121465539722"
+          }
+    }
+   */
 }

@@ -5,29 +5,41 @@ package gson.source.model;
  */
 public class Message {
 
-    private int from_id;
-    private int to_id;
+
+    private long id;
+    private long from_id;
+    private long to_id;
     private String chat_message;
-    private String chat_message_id = "-128";
+    private long chat_message_id = -128;
     private int languages_id;
-    private int created_at;
+    private long created_at;
+    private long updated_at;
+    private int is_read;
     private String rabbitmq_exchange_name;
     private String rabbitmq_queue_name;
     private String rabbitmq_routing_key;
 
-    public int getFrom_id() {
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getFrom_id() {
         return from_id;
     }
 
-    public void setFrom_id(int from_id) {
+    public void setFrom_id(long from_id) {
         this.from_id = from_id;
     }
 
-    public int getTo_id() {
+    public long getTo_id() {
         return to_id;
     }
 
-    public void setTo_id(int to_id) {
+    public void setTo_id(long to_id) {
         this.to_id = to_id;
     }
 
@@ -39,11 +51,11 @@ public class Message {
         this.chat_message = chat_message;
     }
 
-    public String getChat_message_id() {
+    public long getChat_message_id() {
         return chat_message_id;
     }
 
-    public void setChat_message_id(String chat_message_id) {
+    public void setChat_message_id(long chat_message_id) {
         this.chat_message_id = chat_message_id;
     }
 
@@ -55,12 +67,28 @@ public class Message {
         this.languages_id = languages_id;
     }
 
-    public int getCreated_at() {
+    public long getCreated_at() {
         return created_at;
     }
 
-    public void setCreated_at(int created_at) {
+    public void setCreated_at(long created_at) {
         this.created_at = created_at;
+    }
+
+    public long getUpdated_at() {
+        return updated_at;
+    }
+
+    public void setUpdated_at(long updated_at) {
+        this.updated_at = updated_at;
+    }
+
+    public int getIs_read() {
+        return is_read;
+    }
+
+    public void setIs_read(int is_read) {
+        this.is_read = is_read;
     }
 
     public String getRabbitmq_exchange_name() {
@@ -89,6 +117,6 @@ public class Message {
 
     @Override
     public String toString() {
-        return "Message: "+" from_id: "+from_id+", to_id: "+to_id+ ", chat_message: "+ chat_message+ ", chat_message_id: "+ chat_message_id;
+        return "Message: "+" created_at: "+created_at+" from_id: "+from_id+", to_id: "+to_id+ ", chat_message: "+ chat_message+ ", chat_message_id: "+ chat_message_id;
     }
 }

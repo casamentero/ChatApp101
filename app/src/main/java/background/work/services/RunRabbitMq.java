@@ -40,7 +40,7 @@ public class RunRabbitMQ {
     }
 
     public void runThread(CurrentUserRealm mCurrentUserRealm) {
-        Log.d(TAG, "runThread: "+isRunning);
+        Log.d(TAG, "runThread: " + isRunning);
         if (!isRunning) {
             this.mCurrentUserRealm = mCurrentUserRealm;
             listenToRabbitMQ = new ListenToRabbitMQ(this.mCurrentUserRealm.getRabbitmq_exchange_name(),
@@ -51,11 +51,10 @@ public class RunRabbitMQ {
                 this.thread.start();
             }
 
-        }else{
-            Log.d(TAG, "runThread: isRunning: "+isRunning);
+        } else {
+            Log.d(TAG, "runThread: isRunning: " + isRunning);
         }
     }
-
 
 
     private Thread thread = new Thread(new Runnable() {
@@ -75,12 +74,12 @@ public class RunRabbitMQ {
                                 try {
                                     MessageRealm messageRealm = new MessageRealm();
                                     JSONObject jsonObject = new JSONObject(text);
-                                    messageRealm.setFrom_id(Integer.parseInt(jsonObject.getString("from_id")));
-                                    messageRealm.setTo_id(Integer.parseInt(jsonObject.getString("to_id")));
+                                    messageRealm.setFrom_id(Long.parseLong(jsonObject.getString("from_id")));
+                                    messageRealm.setTo_id(Long.parseLong(jsonObject.getString("to_id")));
                                     messageRealm.setChat_message(jsonObject.getString("chat_message"));
-                                    messageRealm.setChat_message_id(jsonObject.getString("chat_message_id"));
+                                    messageRealm.setChat_message_id(Long.parseLong(jsonObject.getString("chat_message_id")));
                                     messageRealm.setLanguages_id(Integer.parseInt(jsonObject.getString("languages_id")));
-                                    messageRealm.setCreated_at(Integer.parseInt(jsonObject.getString("created_at")));
+                                    messageRealm.setCreated_at(jsonObject.getLong("created_at"));
                                     RealmConfiguration realmConfiguration =
                                             new RealmConfiguration.Builder(context).name("MessageRealm.realm").build();
                                     Realm realm = Realm.getInstance(realmConfiguration);
@@ -91,7 +90,7 @@ public class RunRabbitMQ {
                                     e.printStackTrace();
                                     isRunning = listenToRabbitMQ.isRunning();
                                     if (!isRunning) {
-                                       return;
+                                        return;
                                     }
                                 }
                             }

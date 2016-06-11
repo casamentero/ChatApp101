@@ -6,6 +6,7 @@ import android.databinding.ObservableField;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -18,15 +19,24 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
+import background.work.services.ReadDatabaseMessagesIntentService;
 import background.work.services.SendOutboxMessages;
 import gson.source.model.Message;
 import gson.source.model.User;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmConfiguration;
+import io.realm.RealmObject;
 import io.realm.RealmResults;
 import login.activities.source.LoginTestOneActivity;
 import realm.source.model.CurrentUserRealm;
@@ -39,10 +49,12 @@ import support.source.classes.StartUp;
 import support.source.classes.TextWatcherAdapter;
 import user.list.activities.source.UserListActivity;
 
-public class MessageActivity extends AppCompatActivity {
+public class MessageActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
     public static final String TAG = MessageActivity.class.getSimpleName();
 
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private LinearLayoutManager linearLayoutManager;
     private RecyclerView message_RecyclerView;
     private List<Message> messages;
     private MessageRecyclerAdapter adapter;
@@ -83,10 +95,18 @@ public class MessageActivity extends AppCompatActivity {
         initializeUI();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startDraftServices();
+        loadRecyclerView();
+    }
 
     private void initializeUI() {
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.MessageActivity_swipeRefresh);
+        swipeRefreshLayout.setOnRefreshListener(this);
         message_RecyclerView = (RecyclerView) findViewById(R.id.MessageActivity_messages_RecyclerView);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setSmoothScrollbarEnabled(true);
         linearLayoutManager.setStackFromEnd(true);
         message_RecyclerView.setLayoutManager(linearLayoutManager);
@@ -102,7 +122,8 @@ public class MessageActivity extends AppCompatActivity {
             return;
         }
 
-        setTitle(""+to_User.getUsername());
+
+        setTitle("" + to_User.getUsername());
 
         TransactionMessageRealm realm = new TransactionMessageRealm(getApplicationContext());
         messages = realm.readMessages(from_CurrentUserRealm.getId(), to_User.getId());
@@ -117,6 +138,7 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
         realm.closeRealm();
+
     }
 
     public void getIntentInformation() {
@@ -127,6 +149,13 @@ public class MessageActivity extends AppCompatActivity {
             Log.d(TAG, "getIntentInformation: to_User and from_CurrentUserRealm");
             return;
         }
+
+        ReadDatabaseMessagesIntentService
+                .startActionSpecificUser(getApplicationContext(),
+                        ReadDatabaseMessagesIntentService.ACTION_FETCH_FROM_SPECIFIC_USER,
+                        to_User.getId() + "," + from_CurrentUserRealm.getId(), "forward");
+        // ase == forward == new data
+        // desc == reverse == old data
 
         RealmConfiguration realmConfiguration =
                 new RealmConfiguration.Builder(getApplicationContext()).name("MessageRealm.realm").build();
@@ -148,7 +177,7 @@ public class MessageActivity extends AppCompatActivity {
         Log.d(TAG, "writeToRealm: text: " + text);
         TransactionMessageRealm transaction = new TransactionMessageRealm(getApplicationContext());
         MessageRealm messageRealm = new MessageRealm();
-        messageRealm.setChat_message_id("-128");
+        messageRealm.setChat_message_id(-128);
         messageRealm.setChat_message("" + text);
         messageRealm.setLanguages_id(1);
         messageRealm.setTo_id(to_User.getId());
@@ -159,8 +188,7 @@ public class MessageActivity extends AppCompatActivity {
         transaction.writeToRealm(messageRealm);
         messageActivityScreen.getMessage().set("");
         loadRecyclerView();
-        Intent intent = new Intent(getApplicationContext(), SendOutboxMessages.class);
-        startService(intent);
+        startDraftServices();
     }
 
     @Override
@@ -182,6 +210,12 @@ public class MessageActivity extends AppCompatActivity {
             logout();
             return true;
         }
+        if (id == R.id.home) {
+            if (realm != null) {
+                realm.close();
+            }
+            finish();
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -197,14 +231,91 @@ public class MessageActivity extends AppCompatActivity {
         finish();
     }
 
-
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStop() {
+        super.onStop();
         if (realm != null) {
             realm.close();
         }
         finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    private void startDraftServices() {
+        Intent intent = new Intent(getApplicationContext(), SendOutboxMessages.class);
+        startService(intent);
+    }
+
+    @Override
+    public void onRefresh() {
+        downloadPreviousPages();
+    }
+
+    private void downloadPreviousPages() {
+        if (!swipeRefreshLayout.isRefreshing()) {
+            swipeRefreshLayout.setRefreshing(true);
+        }
+        TransactionMessageRealm realm = new TransactionMessageRealm(getApplicationContext());
+        long last_Chat_message_id = realm.findLastBetweenTowUsers(from_CurrentUserRealm.getId(), to_User.getId());
+        String url = null;
+        if (last_Chat_message_id == 0) {
+            url = "http://api.chatndate.com/web/api/chats?users=" +
+                    from_CurrentUserRealm.getId() + "," + to_User.getId() + "&direction=backward";
+        } else {
+            url = "http://api.chatndate.com/web/api/chats?users=" +
+                    from_CurrentUserRealm.getId() + "," + to_User.getId() + "&direction=backward" +
+                    "&startpoint=" + last_Chat_message_id;
+        }
+        Log.d(TAG, "downloadPreviousPages: url\n" + url);
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request request =
+                new Request.Builder()
+                        .url(url)
+                        .build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                Log.d(TAG, "onFailure: ");
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                String json_result = response.body().string();
+                Log.d(TAG, "onResponse: \n" + json_result);
+                if (json_result == null)
+                    return;
+                MyResponse myResponse = (new Gson()).fromJson(json_result, MyResponse.class);
+                if (myResponse.isSuccess()) {
+                    TransactionMessageRealm realm = new TransactionMessageRealm(getApplicationContext());
+                    List<RealmObject> realmObjects = List.class.cast(myResponse.getData());
+                    realm.saveToRealmDatabase(realmObjects);
+                    messages = realm.readMessages(from_CurrentUserRealm.getId(), to_User.getId());
+                    final int count = messages.size();
+                    Log.d(TAG, "onResponse: reading messages from to_User.getId(): " + to_User.getId());
+                    realm.readFromRealmDatabase();
+                    realm.closeRealm();
+                    MessageActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            adapter = new MessageRecyclerAdapter(getApplicationContext(), messages);
+                            message_RecyclerView.setAdapter(adapter);
+                            if (count > 0) {
+                                linearLayoutManager.setStackFromEnd(false);
+                            }
+                            if (swipeRefreshLayout.isRefreshing()) {
+                                swipeRefreshLayout.setRefreshing(false);
+                            }
+                            message_RecyclerView.invalidate();
+                        }
+                    });
+                }
+            }
+        });
+
     }
 
     public class MessageActivityScreen {
@@ -249,4 +360,27 @@ public class MessageActivity extends AppCompatActivity {
         }
     };
 
+    private class MyResponse {
+        @SerializedName("success")
+        private boolean success;
+
+        @SerializedName("data")
+        private ArrayList<MessageRealm> data;
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public ArrayList<MessageRealm> getData() {
+            return data;
+        }
+
+        public void setData(ArrayList<MessageRealm> data) {
+            this.data = data;
+        }
+    }
 }

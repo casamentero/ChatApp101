@@ -26,6 +26,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import background.work.services.SendOutboxMessages;
 import gson.source.model.User;
 import io.realm.RealmObject;
 import login.activities.source.LoginTestOneActivity;
@@ -126,6 +127,8 @@ public class UserListActivity extends AppCompatActivity {
             loadRecyclerView();
         }
         loadUserList();
+        Intent intent = new Intent(getApplicationContext(), SendOutboxMessages.class);
+        startService(intent);
     }
 
     private void loadUserList() {

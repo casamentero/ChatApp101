@@ -58,8 +58,9 @@
         <service
             android:name="background.work.services.SendOutboxMessages"
             android:exported="false" />
-        
-
+        <service
+            android:name="background.work.services.ReadDatabaseMessagesIntentService"
+            android:exported="false"></service>
     </application>
 
 </manifest>
