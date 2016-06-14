@@ -60,6 +60,9 @@
             android:exported="false" />
         <service
             android:name="background.work.services.ReadDatabaseMessagesIntentService"
+            android:exported="false" />
+        <service
+            android:name="background.work.services.NewMessagesIntentService"
             android:exported="false"></service>
     </application>
 

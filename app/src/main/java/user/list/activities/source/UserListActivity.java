@@ -1,6 +1,7 @@
 package user.list.activities.source;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -16,6 +17,13 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Consumer;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -26,14 +34,18 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import background.work.services.NewMessagesIntentService;
 import background.work.services.SendOutboxMessages;
+import constants.app.source.Constants;
 import gson.source.model.User;
 import io.realm.RealmObject;
 import login.activities.source.LoginTestOneActivity;
 import message.activity.source.MessageActivity;
 import realm.source.model.CurrentUserRealm;
+import realm.source.model.MessageRealm;
 import realm.source.model.UserRealm;
 import realm.source.model.transaction.TransactionCurrentUserRealm;
+import realm.source.model.transaction.TransactionMessageRealm;
 import realm.source.model.transaction.TransactionUserRealm;
 import source.app.chat.chatapp.R;
 import support.source.classes.StartUp;
@@ -47,6 +59,7 @@ public class UserListActivity extends AppCompatActivity {
     private CurrentUserRealm currentUserRealm;
     private List<User> users;
     private UserRecyclerAdapter userRecyclerAdapter;
+    private MyRabbitMqReceiver myRabbitMqReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,9 +93,12 @@ public class UserListActivity extends AppCompatActivity {
         currentUserRealm = StartUp.getCurrentUserRealm();
         if (currentUserRealm != null) {
             Log.d(TAG, "getIntentInformation: \n" + (new Gson()).toJson(currentUserRealm));
+            NewMessagesIntentService
+                    .startActionAllMessages(getApplicationContext(), "" + currentUserRealm.getId(), "" + 1);
 
         } else {
             Log.d(TAG, "getIntentInformation: it is null");
+            return;
         }
     }
 
@@ -129,6 +145,14 @@ public class UserListActivity extends AppCompatActivity {
         loadUserList();
         Intent intent = new Intent(getApplicationContext(), SendOutboxMessages.class);
         startService(intent);
+        myRabbitMqReceiver = new MyRabbitMqReceiver();
+        myRabbitMqReceiver.execute();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        myRabbitMqReceiver.cancel(true);
     }
 
     private void loadUserList() {
@@ -193,6 +217,129 @@ public class UserListActivity extends AppCompatActivity {
             }
         });
         transaction.closeRealm();
+    }
+
+    private class MyRabbitMqReceiver extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            Log.d(TAG, "doInBackground: ");
+            try {
+                ConnectionFactory factory = new ConnectionFactory();
+                factory.setHost(Constants.RabbitMqCredentials.IP_ADRRESS);
+                factory.setUsername(Constants.RabbitMqCredentials.USERNAME);
+                factory.setPassword(Constants.RabbitMqCredentials.PASSWORD);
+                factory.setPort(Constants.RabbitMqCredentials.PORT);
+                Connection connection = factory.newConnection();
+
+                Channel channel = connection.createChannel();
+                channel.exchangeDeclare(Constants.RabbitMqCredentials.EXCHANGE_NAME, "topic", true);
+
+                String queueName = channel.queueDeclare().getQueue();
+                channel.queueBind(queueName, Constants.RabbitMqCredentials.EXCHANGE_NAME, currentUserRealm.getRabbitmq_routing_key());
+
+                Log.d(TAG, " [*] Waiting for messages. To exit press CTRL+C");
+                Consumer consumer = new DefaultConsumer(channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+                            throws IOException {
+                        String message = new String(body, "UTF-8");
+                        System.out.println(" [x] Received '" + message + "'");
+                        Log.d(TAG, "handleDelivery: \n" + message);
+                        try {
+                            RabbitMqResponse rabbitMqResponse = (new Gson()).fromJson(message, RabbitMqResponse.class);
+                            MessageRealm messageRealm = new MessageRealm();
+                            messageRealm.setFrom_id(rabbitMqResponse.getFrom_id());
+                            messageRealm.setTo_id(rabbitMqResponse.getTo_id());
+                            messageRealm.setChat_message(rabbitMqResponse.getChat_message());
+                            messageRealm.setChat_message_id(rabbitMqResponse.getChat_message_id());
+                            messageRealm.setLanguages_id(rabbitMqResponse.getLanguages_id());
+                            messageRealm.setCreated_at(rabbitMqResponse.getCreated_at());
+                            TransactionMessageRealm realm = new TransactionMessageRealm(getApplicationContext());
+                            List<RealmObject> realmObjects = new ArrayList<>();
+                            realmObjects.add(messageRealm);
+                            realm.saveToRealmDatabase(realmObjects);
+                            realm.closeRealm();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                };
+                channel.basicConsume(queueName, true, consumer);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            Log.d(TAG, "onCancelled: ");
+        }
+
+        @Override
+        protected void onCancelled(Void aVoid) {
+            super.onCancelled(aVoid);
+            Log.d(TAG, "onCancelled: ");
+        }
+
+        private class RabbitMqResponse {
+            private long from_id;
+            private long to_id;
+            private String chat_message;
+            private long chat_message_id;
+            private int languages_id;
+            private long created_at;
+
+            public long getFrom_id() {
+                return from_id;
+            }
+
+            public void setFrom_id(long from_id) {
+                this.from_id = from_id;
+            }
+
+            public long getTo_id() {
+                return to_id;
+            }
+
+            public void setTo_id(long to_id) {
+                this.to_id = to_id;
+            }
+
+            public String getChat_message() {
+                return chat_message;
+            }
+
+            public void setChat_message(String chat_message) {
+                this.chat_message = chat_message;
+            }
+
+            public long getChat_message_id() {
+                return chat_message_id;
+            }
+
+            public void setChat_message_id(long chat_message_id) {
+                this.chat_message_id = chat_message_id;
+            }
+
+            public int getLanguages_id() {
+                return languages_id;
+            }
+
+            public void setLanguages_id(int languages_id) {
+                this.languages_id = languages_id;
+            }
+
+            public long getCreated_at() {
+                return created_at;
+            }
+
+            public void setCreated_at(long created_at) {
+                this.created_at = created_at;
+            }
+        }
     }
 
 

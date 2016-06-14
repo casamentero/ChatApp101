@@ -123,9 +123,7 @@ public class LoginTestOneActivity extends AppCompatActivity implements View.OnCl
                         Log.d(TAG, "onResponse: relam gson instance\n" + (new Gson()).toJson(currentUserRealm));
                         Intent my_Intent = new Intent(getApplicationContext(), UserListActivity.class);
                         startActivity(my_Intent);
-                        if (mCurrentUserRealm != null) {
-                            startReceiveIncomingServices(mCurrentUserRealm);
-                        }
+
                     }
                 });
 

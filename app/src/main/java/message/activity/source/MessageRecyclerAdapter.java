@@ -46,7 +46,7 @@ public class MessageRecyclerAdapter extends RecyclerView.Adapter<MessageRecycler
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Message message = messages.get(position);
-        Log.d(TAG, "onBindViewHolder: message: "+message.getChat_message()+", position: "+position);
+        Log.d(TAG, "onBindViewHolder: message: "+message.getChat_message()+", position: "+position+" id: "+message.getChat_message_id());
         if (message.getFrom_id() == currentUserRealm.getId()) {
             holder.right_callout_LinearLayout.setVisibility(View.VISIBLE);
             holder.left_callout_LinearLayout.setVisibility(View.GONE);

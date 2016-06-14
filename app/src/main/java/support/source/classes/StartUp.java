@@ -23,8 +23,6 @@ public class StartUp extends Application {
 
         readCurrentUserRealm();
         startDraftServices();
-        startReceiveIncomingServices();
-
     }
 
     private void startReceiveIncomingServices() {

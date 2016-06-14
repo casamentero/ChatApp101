@@ -16,4 +16,11 @@ public final class Constants {
         public static final String EXCHANGE_TYPE_FANOUT = "fanout";
     }
 
+    public static final class ChatAPI {
+        public static final String DIRECTION_BACKWARD = "backward";
+        public static final String DIRECTION_FORWARD = "forward";
+
+    }
+
+
 }

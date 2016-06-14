@@ -37,7 +37,7 @@ public class TransactionMessageRealm extends Transaction {
                 .equalTo("from_id", to_id)
                 .equalTo("to_id", from_id)
                 .notEqualTo("chat_message_id", -128)
-                .findAllSorted("id", Sort.ASCENDING);
+                .findAllSorted("chat_message_id", Sort.ASCENDING);
 
         Log.d(TAG, "readMessages: all.size(): " + all.size());
         for (MessageRealm messageRealm : all) {
@@ -94,7 +94,7 @@ public class TransactionMessageRealm extends Transaction {
                 .equalTo("from_id", to_id)
                 .equalTo("to_id", from_id)
                 .notEqualTo("chat_message_id", -128)
-                .findAllSorted("id", Sort.ASCENDING);
+                .findAllSorted("chat_message_id", Sort.ASCENDING);
         if (allSorted != null) {
             if (allSorted.size() > 0) {
                 MessageRealm messageRealm = allSorted.last();
@@ -119,7 +119,7 @@ public class TransactionMessageRealm extends Transaction {
                 .equalTo("from_id", to_id)
                 .equalTo("to_id", from_id)
                 .notEqualTo("chat_message_id", -128)
-                .findAllSorted("id", Sort.ASCENDING);
+                .findAllSorted("chat_message_id", Sort.ASCENDING);
         if (allSorted != null) {
             if (allSorted.size() > 0) {
                 MessageRealm messageRealm = allSorted.first();
@@ -138,6 +138,17 @@ public class TransactionMessageRealm extends Transaction {
                 .equalTo("chat_message_id", -128)
                 .findAll();
         return messageRealms;
+    }
+
+    public int messagesCount(int for_user_id) {
+        RealmResults<MessageRealm> all = realm.where(MessageRealm.class)
+                .equalTo("from_id", for_user_id)
+                .notEqualTo("chat_message_id", -128)
+                .or()
+                .equalTo("to_id", for_user_id)
+                .notEqualTo("chat_message_id", -128)
+                .findAllSorted("chat_message_id", Sort.ASCENDING);
+        return all.size();
     }
 
     public void writeToRealm(MessageRealm messageRealm) {

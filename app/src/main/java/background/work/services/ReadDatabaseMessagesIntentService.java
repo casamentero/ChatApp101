@@ -64,12 +64,12 @@ public class ReadDatabaseMessagesIntentService extends IntentService {
      * Starts this service to perform action Baz with the given parameters. If
      * the service is already performing a task this action will be queued.
      *
-     * @param context  this will provide us the context
-     * @param action   this will provide us the action we need to take, it's not in use
-     *                 right now but it is kept for future changes.
-     * @param usersIDs this will provide us the users information between whom we have to retrive the
-     *                 messages for.
-     * @param direction  This will be either asc|desc to retrieve new|old data (forward|reverse)
+     * @param context   this will provide us the context
+     * @param action    this will provide us the action we need to take, it's not in use
+     *                  right now but it is kept for future changes.
+     * @param usersIDs  this will provide us the users information between whom we have to retrive the
+     *                  messages for.
+     * @param direction This will be either asc|desc to retrieve new|old data (forward|reverse)
      * @see IntentService
      */
     // TODO: Customize helper method
@@ -167,17 +167,24 @@ public class ReadDatabaseMessagesIntentService extends IntentService {
                             stopSelf();
                             return;
                         }
-                        MyResponse myResponse = (new Gson()).fromJson(result, MyResponse.class);
-                        if (myResponse != null) {
-                            if (myResponse.isSuccess()) {
-                                List<RealmObject> realmObjects = List.class.cast(myResponse.getData());
-                                TransactionMessageRealm transactionMessageRealm
-                                        = new TransactionMessageRealm(getApplicationContext());
-                                transactionMessageRealm.saveToRealmDatabase(realmObjects);
-                                transactionMessageRealm.closeRealm();
+                        try {
+                            MyResponse myResponse = (new Gson()).fromJson(result, MyResponse.class);
+                            if (myResponse != null) {
+                                if (myResponse.isSuccess()) {
+                                    List<RealmObject> realmObjects = List.class.cast(myResponse.getData());
+                                    TransactionMessageRealm transactionMessageRealm
+                                            = new TransactionMessageRealm(getApplicationContext());
+                                    transactionMessageRealm.saveToRealmDatabase(realmObjects);
+                                    transactionMessageRealm.closeRealm();
+                                }
                             }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            stopSelf();
+                        } finally {
+
                         }
-                        stopSelf();
+
                     }
                 });
             }
