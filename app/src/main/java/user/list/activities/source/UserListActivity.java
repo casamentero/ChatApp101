@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import background.work.services.NewMessagesIntentService;
+import background.work.services.RunRabbitMQ;
 import background.work.services.SendOutboxMessages;
 import constants.app.source.Constants;
 import gson.source.model.User;
@@ -59,7 +60,7 @@ public class UserListActivity extends AppCompatActivity {
     private CurrentUserRealm currentUserRealm;
     private List<User> users;
     private UserRecyclerAdapter userRecyclerAdapter;
-    private MyRabbitMqReceiver myRabbitMqReceiver;
+//    private MyRabbitMqReceiver myRabbitMqReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,7 +96,8 @@ public class UserListActivity extends AppCompatActivity {
             Log.d(TAG, "getIntentInformation: \n" + (new Gson()).toJson(currentUserRealm));
             NewMessagesIntentService
                     .startActionAllMessages(getApplicationContext(), "" + currentUserRealm.getId(), "" + 1);
-
+            RunRabbitMQ runRabbitMQ = RunRabbitMQ.getInstance(getApplicationContext());
+            runRabbitMQ.runThread(currentUserRealm);
         } else {
             Log.d(TAG, "getIntentInformation: it is null");
             return;
@@ -145,14 +147,14 @@ public class UserListActivity extends AppCompatActivity {
         loadUserList();
         Intent intent = new Intent(getApplicationContext(), SendOutboxMessages.class);
         startService(intent);
-        myRabbitMqReceiver = new MyRabbitMqReceiver();
-        myRabbitMqReceiver.execute();
+//        myRabbitMqReceiver = new MyRabbitMqReceiver();
+//        myRabbitMqReceiver.execute();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        myRabbitMqReceiver.cancel(true);
+//        myRabbitMqReceiver.cancel(true);
     }
 
     private void loadUserList() {

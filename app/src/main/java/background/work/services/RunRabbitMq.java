@@ -48,7 +48,9 @@ public class RunRabbitMQ {
                     this.mCurrentUserRealm.getRabbitmq_routing_key());
 
             if (!this.thread.isAlive()) {
-                this.thread.start();
+                if (this.thread.getState() == Thread.State.NEW ) {
+                    this.thread.start();
+                }
             }
 
         } else {
@@ -57,10 +59,10 @@ public class RunRabbitMQ {
     }
 
 
-    private Thread thread = new Thread(new Runnable() {
+    private static Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
-            Log.d(TAG, "run: thread");
+            Log.d(TAG, "run method: thread: " + isRunning);
             isRunning = listenToRabbitMQ.readMessages();
 
             listenToRabbitMQ.setOnReceiveMessageHandler(new OnReceiveMessageHandler() {

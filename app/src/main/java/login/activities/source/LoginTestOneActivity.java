@@ -87,7 +87,10 @@ public class LoginTestOneActivity extends AppCompatActivity implements View.OnCl
 
                 Log.d(TAG, "onClickSend: " + userLoginScreen.getUser_ID().get());
                 Toast.makeText(getApplicationContext(), "click" + userLoginScreen.getUser_ID().get(), Toast.LENGTH_SHORT).show();
-
+                if (userLoginScreen.getUser_ID().get() == null) {
+                    Toast.makeText(getApplicationContext(), "Enter a number", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 OkHttpClient okHttpClient = new OkHttpClient();
                 final Request request = new Request.Builder().url("http://api.chatndate.com/web/api/users/" + userLoginScreen.getUser_ID().get()).build();
@@ -105,25 +108,29 @@ public class LoginTestOneActivity extends AppCompatActivity implements View.OnCl
                             return;
                         if (json_result.contentEquals(""))
                             return;
-                        MyResponse myResponse = (new Gson()).fromJson(json_result, MyResponse.class);
-                        if (!myResponse.isSuccess())
-                            return;
-                        String result = (new Gson()).toJson(myResponse.getData());
-                        CurrentUserRealm currentUserRealm = (new Gson()).fromJson(result, CurrentUserRealm.class);
-                        Log.d(TAG, "onResponse: email: " + currentUserRealm.getEmail());
-                        TransactionCurrentUserRealm realm = new TransactionCurrentUserRealm(getApplicationContext());
-                        List<CurrentUserRealm> currentUserRealms = new ArrayList<CurrentUserRealm>();
-                        currentUserRealms.add(currentUserRealm);
-                        List<RealmObject> realmObjects = List.class.cast(currentUserRealms);
-                        realm.saveToRealmDatabase(realmObjects);
-                        realm.closeRealm();
-                        mCurrentUserRealm = currentUserRealm;
-                        StartUp.setCurrentUserRealm(mCurrentUserRealm);
 
-                        Log.d(TAG, "onResponse: relam gson instance\n" + (new Gson()).toJson(currentUserRealm));
-                        Intent my_Intent = new Intent(getApplicationContext(), UserListActivity.class);
-                        startActivity(my_Intent);
+                        try {
+                            MyResponse myResponse = (new Gson()).fromJson(json_result, MyResponse.class);
+                            if (!myResponse.isSuccess())
+                                return;
+                            String result = (new Gson()).toJson(myResponse.getData());
+                            CurrentUserRealm currentUserRealm = (new Gson()).fromJson(result, CurrentUserRealm.class);
+                            Log.d(TAG, "onResponse: email: " + currentUserRealm.getEmail());
+                            TransactionCurrentUserRealm realm = new TransactionCurrentUserRealm(getApplicationContext());
+                            List<CurrentUserRealm> currentUserRealms = new ArrayList<CurrentUserRealm>();
+                            currentUserRealms.add(currentUserRealm);
+                            List<RealmObject> realmObjects = List.class.cast(currentUserRealms);
+                            realm.saveToRealmDatabase(realmObjects);
+                            realm.closeRealm();
+                            mCurrentUserRealm = currentUserRealm;
+                            StartUp.setCurrentUserRealm(mCurrentUserRealm);
 
+                            Log.d(TAG, "onResponse: relam gson instance\n" + (new Gson()).toJson(currentUserRealm));
+                            Intent my_Intent = new Intent(getApplicationContext(), UserListActivity.class);
+                            startActivity(my_Intent);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
 

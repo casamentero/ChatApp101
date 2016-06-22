@@ -39,6 +39,7 @@ import java.util.List;
 
 import background.work.services.NewMessagesIntentService;
 import background.work.services.ReadDatabaseMessagesIntentService;
+import background.work.services.RunRabbitMQ;
 import background.work.services.SendOutboxMessages;
 import constants.app.source.Constants;
 import gson.source.model.Message;
@@ -74,7 +75,7 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
 
     private Realm realm;
     private RealmResults<MessageRealm> messageRealms;
-    private MyRabbitMqReceiver myRabbitMqReceiver;
+//    private MyRabbitMqReceiver myRabbitMqReceiver;
 
     // Receiver 
     @Override
@@ -112,8 +113,8 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
         super.onResume();
         startDraftServices();
         loadRecyclerView();
-        myRabbitMqReceiver = new MyRabbitMqReceiver();
-        myRabbitMqReceiver.execute();
+//        myRabbitMqReceiver = new MyRabbitMqReceiver();
+//        myRabbitMqReceiver.execute();
     }
 
     private void initializeUI() {
@@ -163,6 +164,9 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
             Log.d(TAG, "getIntentInformation: to_User and from_CurrentUserRealm");
             return;
         }
+
+        RunRabbitMQ runRabbitMQ = RunRabbitMQ.getInstance(getApplicationContext());
+        runRabbitMQ.runThread(from_CurrentUserRealm);
 
         ReadDatabaseMessagesIntentService
                 .startActionSpecificUser(getApplicationContext(),
@@ -234,7 +238,7 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
             if (realm != null) {
                 realm.close();
             }
-            myRabbitMqReceiver.cancel(true);
+//            myRabbitMqReceiver.cancel(true);
             finish();
         }
 
