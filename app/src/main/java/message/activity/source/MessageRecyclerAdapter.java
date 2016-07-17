@@ -14,6 +14,7 @@ import java.util.List;
 import gson.source.model.Message;
 import realm.source.model.CurrentUserRealm;
 import source.app.chat.chatapp.R;
+import support.source.classes.MySharedPreferences;
 import support.source.classes.StartUp;
 
 /**
@@ -33,7 +34,7 @@ public class MessageRecyclerAdapter extends RecyclerView.Adapter<MessageRecycler
         this.messages = messages;
         this.layoutInflater = LayoutInflater.from(this.context);
         currentUserRealm = StartUp.getCurrentUserRealm();
-        Log.d(TAG, "MessageRecyclerAdapter: messages.size(): "+messages.size());
+        Log.d(TAG, "MessageRecyclerAdapter: messages.size(): " + messages.size());
     }
 
     @Override
@@ -46,15 +47,26 @@ public class MessageRecyclerAdapter extends RecyclerView.Adapter<MessageRecycler
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Message message = messages.get(position);
-        Log.d(TAG, "onBindViewHolder: message: "+message.getChat_message()+", position: "+position+" id: "+message.getChat_message_id());
+        Log.d(TAG, "onBindViewHolder: message: " + message.getChat_message_en() + ", position: " + position + " id: " + message.getChat_message_id());
+        MySharedPreferences preferences = MySharedPreferences.getInstance(this.context);
+        int language = preferences.getLanguage();
+        Log.d(TAG, "onBindViewHolder: language: " + language);
         if (message.getFrom_id() == currentUserRealm.getId()) {
             holder.right_callout_LinearLayout.setVisibility(View.VISIBLE);
             holder.left_callout_LinearLayout.setVisibility(View.GONE);
-            holder.right_callout_TextView.setText("" + message.getChat_message());
+            if (language == 1) {
+                holder.right_callout_TextView.setText("" + message.getChat_message_en());
+            } else if (language == 2) {
+                holder.right_callout_TextView.setText("" + message.getChat_message_es());
+            }
         } else {
             holder.right_callout_LinearLayout.setVisibility(View.GONE);
             holder.left_callout_LinearLayout.setVisibility(View.VISIBLE);
-            holder.left_callout_TextView.setText("" + message.getChat_message());
+            if (language == 1) {
+                holder.left_callout_TextView.setText("" + message.getChat_message_en());
+            } else if (language == 2) {
+                holder.left_callout_TextView.setText("" + message.getChat_message_es());
+            }
         }
     }
 

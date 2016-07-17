@@ -253,7 +253,8 @@ public class UserListActivity extends AppCompatActivity {
                             MessageRealm messageRealm = new MessageRealm();
                             messageRealm.setFrom_id(rabbitMqResponse.getFrom_id());
                             messageRealm.setTo_id(rabbitMqResponse.getTo_id());
-                            messageRealm.setChat_message(rabbitMqResponse.getChat_message());
+                            messageRealm.setChat_message_en(rabbitMqResponse.getChat_message_en());
+                            messageRealm.setChat_message_es(rabbitMqResponse.getChat_message_es());
                             messageRealm.setChat_message_id(rabbitMqResponse.getChat_message_id());
                             messageRealm.setLanguages_id(rabbitMqResponse.getLanguages_id());
                             messageRealm.setCreated_at(rabbitMqResponse.getCreated_at());
@@ -289,7 +290,8 @@ public class UserListActivity extends AppCompatActivity {
         private class RabbitMqResponse {
             private long from_id;
             private long to_id;
-            private String chat_message;
+            private String chat_message_en;
+            private String chat_message_es;
             private long chat_message_id;
             private int languages_id;
             private long created_at;
@@ -310,12 +312,20 @@ public class UserListActivity extends AppCompatActivity {
                 this.to_id = to_id;
             }
 
-            public String getChat_message() {
-                return chat_message;
+            public String getChat_message_en() {
+                return chat_message_en;
             }
 
-            public void setChat_message(String chat_message) {
-                this.chat_message = chat_message;
+            public void setChat_message_en(String chat_message_en) {
+                this.chat_message_en = chat_message_en;
+            }
+
+            public String getChat_message_es() {
+                return chat_message_es;
+            }
+
+            public void setChat_message_es(String chat_message_es) {
+                this.chat_message_es = chat_message_es;
             }
 
             public long getChat_message_id() {

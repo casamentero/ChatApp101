@@ -8,8 +8,6 @@ import com.google.gson.Gson;
 
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
-
 import constants.app.source.Constants;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
@@ -44,6 +42,13 @@ public class ReceiveIncomingMessages extends IntentService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        Log.d(TAG, "onHandleIntent: ");
         Log.d(TAG, "onStartCommand: this is called");
         String data = intent.getStringExtra("CurrentUserRealm");
         if (data != null) {
@@ -66,26 +71,18 @@ public class ReceiveIncomingMessages extends IntentService {
                 }
             }
         }
-        return START_REDELIVER_INTENT;
-    }
-
-    @Override
-    protected void onHandleIntent(Intent intent) {
-        Log.d(TAG, "onHandleIntent: ");
-
     }
 
     private Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
             Log.d(TAG, "run: thread");
-            isRunning = listenToRabbitMQ.readMessages();
 
             listenToRabbitMQ.setOnReceiveMessageHandler(new OnReceiveMessageHandler() {
                 @Override
-                public void onReceiveMessage(byte[] message) {
+                public void onReceiveMessage(String message) {
                     try {
-                        String text = new String(message, "UTF8");
+                        String text = message;
                         Log.d(TAG, "onReceiveMessage: \n" + text);
                         if (text != null) {
                             if (!text.contentEquals("")) {
@@ -95,7 +92,8 @@ public class ReceiveIncomingMessages extends IntentService {
                                     messageRealm.setId(jsonObject.getLong("id"));
                                     messageRealm.setFrom_id(jsonObject.getLong("from_id"));
                                     messageRealm.setTo_id(jsonObject.getLong("to_id"));
-                                    messageRealm.setChat_message(jsonObject.getString("chat_message"));
+                                    messageRealm.setChat_message_en(jsonObject.getString("chat_message_en"));
+                                    messageRealm.setChat_message_es(jsonObject.getString("chat_message_es"));
                                     messageRealm.setChat_message_id(jsonObject.getLong("chat_message_id"));
                                     messageRealm.setLanguages_id(Integer.parseInt(jsonObject.getString("languages_id")));
                                     messageRealm.setCreated_at(Integer.parseInt(jsonObject.getString("created_at")));
@@ -112,12 +110,15 @@ public class ReceiveIncomingMessages extends IntentService {
                             }
                         }
 
-                    } catch (UnsupportedEncodingException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                         isRunning = false;
                     }
                 }
             });
+
+            isRunning = listenToRabbitMQ.readMessages();
+
         }
     });
 

@@ -5,6 +5,8 @@ package constants.app.source;
  */
 public final class Constants {
 
+//    https://github.com/casamentero/ChatApp101
+
     public static final class RabbitMqCredentials {
         public static final String IP_ADRRESS = "162.144.209.190";
         public static final int PORT = 5672;

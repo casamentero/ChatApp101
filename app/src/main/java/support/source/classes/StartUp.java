@@ -2,6 +2,7 @@ package support.source.classes;
 
 import android.app.Application;
 import android.content.Intent;
+import android.util.Log;
 
 import background.work.services.RunRabbitMQ;
 import background.work.services.SendOutboxMessages;
@@ -24,6 +25,13 @@ public class StartUp extends Application {
         readCurrentUserRealm();
         startDraftServices();
         startReceiveIncomingServices();
+        createSharedPreferences();
+    }
+
+    private void createSharedPreferences() {
+        MySharedPreferences preferences = MySharedPreferences.getInstance(getApplicationContext());
+        int language = preferences.getLanguage();
+        Log.d(TAG, "createSharedPreferences: default: language: " + language);
     }
 
     private void startReceiveIncomingServices() {

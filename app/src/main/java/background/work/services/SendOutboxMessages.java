@@ -82,11 +82,12 @@ public class SendOutboxMessages extends IntentService {
                     realm.where(MessageRealm.class).equalTo("chat_message_id", -128).findAll();
             Log.d(TAG, "run: messageRealms.size(): " + messageRealms.size());
             for (MessageRealm messageRealm : messageRealms) {
-                Log.d(TAG, "run: send message: \n" + messageRealm.getChat_message());
+                Log.d(TAG, "run: send message: \n" + messageRealm.getChat_message_en());
                 RequestBody formBody = new FormEncodingBuilder()
                         .add("from_id", "" + messageRealm.getFrom_id())
                         .add("to_id", "" + messageRealm.getTo_id())
-                        .add("chat_message", messageRealm.getChat_message())
+                        .add("chat_message_en", messageRealm.getChat_message_en())
+                        .add("chat_message_es", messageRealm.getChat_message_es())
                         .add("languages_id", "" + messageRealm.getLanguages_id())
                         .add("rabbitmq_exchange_name", messageRealm.getRabbitmq_exchange_name())
                         .add("rabbitmq_queue_name", messageRealm.getRabbitmq_queue_name())
@@ -133,7 +134,7 @@ public class SendOutboxMessages extends IntentService {
         public void onChange(RealmResults<MessageRealm> element) {
             Log.d(TAG, "onChange: element.size(): " + element.size());
             MessageRealm messageRealm = element.last();
-            Log.d(TAG, "onChange: messageRealm.getChat_message: " + messageRealm.getChat_message());
+            Log.d(TAG, "onChange: messageRealm.getChat_message: " + messageRealm.getChat_message_en());
         }
     };
 

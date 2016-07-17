@@ -5,8 +5,6 @@ import android.util.Log;
 
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
-
 import constants.app.source.Constants;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
@@ -46,9 +44,11 @@ public class RunRabbitMQ {
             listenToRabbitMQ = new ListenToRabbitMQ(this.mCurrentUserRealm.getRabbitmq_exchange_name(),
                     Constants.RabbitMqCredentials.EXCHANGE_TYPE_TOPIC,
                     this.mCurrentUserRealm.getRabbitmq_routing_key());
-
+            Log.d(TAG, "runThread: position :1");
             if (!this.thread.isAlive()) {
-                if (this.thread.getState() == Thread.State.NEW ) {
+                Log.d(TAG, "runThread: position :2");
+                if (this.thread.getState() == Thread.State.NEW) {
+                    Log.d(TAG, "runThread: position :3");
                     this.thread.start();
                 }
             }
@@ -59,17 +59,16 @@ public class RunRabbitMQ {
     }
 
 
-    private static Thread thread = new Thread(new Runnable() {
+    private Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
             Log.d(TAG, "run method: thread: " + isRunning);
-            isRunning = listenToRabbitMQ.readMessages();
 
             listenToRabbitMQ.setOnReceiveMessageHandler(new OnReceiveMessageHandler() {
                 @Override
-                public void onReceiveMessage(byte[] message) {
+                public void onReceiveMessage(String message) {
                     try {
-                        String text = new String(message, "UTF8");
+                        String text = message;
                         Log.d(TAG, "onReceiveMessage: \n" + text);
                         if (text != null) {
                             if (!text.contentEquals("")) {
@@ -78,7 +77,8 @@ public class RunRabbitMQ {
                                     JSONObject jsonObject = new JSONObject(text);
                                     messageRealm.setFrom_id(Long.parseLong(jsonObject.getString("from_id")));
                                     messageRealm.setTo_id(Long.parseLong(jsonObject.getString("to_id")));
-                                    messageRealm.setChat_message(jsonObject.getString("chat_message"));
+                                    messageRealm.setChat_message_en(jsonObject.getString("chat_message_en"));
+                                    messageRealm.setChat_message_es(jsonObject.getString("chat_message_es"));
                                     messageRealm.setChat_message_id(Long.parseLong(jsonObject.getString("chat_message_id")));
                                     messageRealm.setLanguages_id(Integer.parseInt(jsonObject.getString("languages_id")));
                                     messageRealm.setCreated_at(jsonObject.getLong("created_at"));
@@ -98,12 +98,15 @@ public class RunRabbitMQ {
                             }
                         }
 
-                    } catch (UnsupportedEncodingException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                         isRunning = listenToRabbitMQ.isRunning();
                     }
                 }
             });
+
+            isRunning = listenToRabbitMQ.readMessages();
+
         }
     });
 }

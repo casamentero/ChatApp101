@@ -44,7 +44,32 @@ public class TransactionMessageRealm extends Transaction {
             Message message = new Message();
             message.setFrom_id(messageRealm.getFrom_id());
             message.setTo_id(messageRealm.getTo_id());
-            message.setChat_message(messageRealm.getChat_message());
+            message.setChat_message_en(messageRealm.getChat_message_en());
+            message.setChat_message_es(messageRealm.getChat_message_es());
+            message.setChat_message_id(messageRealm.getChat_message_id());
+            message.setLanguages_id(messageRealm.getLanguages_id());
+            message.setCreated_at(messageRealm.getCreated_at());
+            message.setRabbitmq_routing_key(messageRealm.getRabbitmq_routing_key());
+            message.setRabbitmq_exchange_name(messageRealm.getRabbitmq_exchange_name());
+            message.setRabbitmq_queue_name(messageRealm.getRabbitmq_queue_name());
+            Log.d(TAG, "readMessages: message:" + message.toString());
+            messages.add(message);
+        }
+
+        RealmResults<MessageRealm> all_127 = realm.where(MessageRealm.class)
+                .equalTo("from_id", from_id)
+                .equalTo("to_id", to_id)
+                .equalTo("chat_message_id", -127)
+                .or()
+                .equalTo("from_id", to_id)
+                .equalTo("to_id", from_id)
+                .equalTo("chat_message_id", -127).findAll();
+        for (MessageRealm messageRealm : all_127) {
+            Message message = new Message();
+            message.setFrom_id(messageRealm.getFrom_id());
+            message.setTo_id(messageRealm.getTo_id());
+            message.setChat_message_en(messageRealm.getChat_message_en());
+            message.setChat_message_es(messageRealm.getChat_message_es());
             message.setChat_message_id(messageRealm.getChat_message_id());
             message.setLanguages_id(messageRealm.getLanguages_id());
             message.setCreated_at(messageRealm.getCreated_at());
@@ -67,7 +92,8 @@ public class TransactionMessageRealm extends Transaction {
             Message message = new Message();
             message.setFrom_id(messageRealm.getFrom_id());
             message.setTo_id(messageRealm.getTo_id());
-            message.setChat_message(messageRealm.getChat_message());
+            message.setChat_message_en(messageRealm.getChat_message_en());
+            message.setChat_message_es(messageRealm.getChat_message_es());
             message.setChat_message_id(messageRealm.getChat_message_id());
             message.setLanguages_id(messageRealm.getLanguages_id());
             message.setCreated_at(messageRealm.getCreated_at());
@@ -202,7 +228,8 @@ public class TransactionMessageRealm extends Transaction {
             item.setId(messageRealm.getId());
             item.setFrom_id(messageRealm.getFrom_id());
             item.setTo_id(messageRealm.getTo_id());
-            item.setChat_message(messageRealm.getChat_message());
+            item.setChat_message_en(messageRealm.getChat_message_en());
+            item.setChat_message_es(messageRealm.getChat_message_es());
             item.setChat_message_id(messageRealm.getChat_message_id());
             item.setLanguages_id(messageRealm.getLanguages_id());
             item.setRabbitmq_exchange_name(messageRealm.getRabbitmq_exchange_name());

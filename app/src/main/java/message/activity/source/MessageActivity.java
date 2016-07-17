@@ -5,12 +5,14 @@ import android.databinding.DataBindingUtil;
 import android.databinding.ObservableField;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,6 +20,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CompoundButton;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
@@ -37,6 +40,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import background.work.services.GoogleTranslateIntentService;
 import background.work.services.NewMessagesIntentService;
 import background.work.services.ReadDatabaseMessagesIntentService;
 import background.work.services.RunRabbitMQ;
@@ -56,6 +60,7 @@ import realm.source.model.transaction.TransactionCurrentUserRealm;
 import realm.source.model.transaction.TransactionMessageRealm;
 import source.app.chat.chatapp.R;
 import source.app.chat.chatapp.databinding.ActivityMessageBinding;
+import support.source.classes.MySharedPreferences;
 import support.source.classes.StartUp;
 import support.source.classes.TextWatcherAdapter;
 import user.list.activities.source.UserListActivity;
@@ -72,6 +77,8 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
     private MessageActivityScreen messageActivityScreen;
     private CurrentUserRealm from_CurrentUserRealm;
     private User to_User;
+    private SwitchCompat language_SwitchCompat;
+    private Handler handler;
 
     private Realm realm;
     private RealmResults<MessageRealm> messageRealms;
@@ -113,11 +120,13 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
         super.onResume();
         startDraftServices();
         loadRecyclerView();
+//        startRabbitMq();
 //        myRabbitMqReceiver = new MyRabbitMqReceiver();
 //        myRabbitMqReceiver.execute();
     }
 
     private void initializeUI() {
+        handler = new Handler();
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.MessageActivity_swipeRefresh);
         swipeRefreshLayout.setOnRefreshListener(this);
         message_RecyclerView = (RecyclerView) findViewById(R.id.MessageActivity_messages_RecyclerView);
@@ -130,6 +139,37 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
         getIntentInformation();
         loadRecyclerView();
     }
+
+    private CompoundButton.OnCheckedChangeListener language_Listener = new CompoundButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            MySharedPreferences preferences = MySharedPreferences.getInstance(getApplicationContext());
+            if (isChecked) {
+                Log.d(TAG, "onCheckedChanged: isChecked: " + isChecked);
+                preferences.setLanguage(2);
+                if (adapter != null) {
+                    handler.postAtFrontOfQueue(new Runnable() {
+                        @Override
+                        public void run() {
+                            adapter.notifyDataSetChanged();
+                        }
+                    });
+                }
+            } else {
+                Log.d(TAG, "onCheckedChanged: isChecked: " + isChecked);
+                preferences.setLanguage(1);
+                if (adapter != null) {
+                    handler.postAtFrontOfQueue(new Runnable() {
+                        @Override
+                        public void run() {
+                            adapter.notifyDataSetChanged();
+
+                        }
+                    });
+                }
+            }
+        }
+    };
 
     private void loadRecyclerView() {
         if ((to_User == null) && (from_CurrentUserRealm == null)) {
@@ -190,17 +230,23 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
         messageRealms.addChangeListener(listener);
     }
 
+    /**
+     * This method save messages in one of the language and waits while taking -127 chat_message_id,
+     * that it would be translated and chat_message_id will become -128
+     */
     private void writeToRealm(String text) {
         if ((to_User == null) && (from_CurrentUserRealm == null)) {
             Log.d(TAG, "getIntentInformation: to_User and from_CurrentUserRealm");
             return;
         }
         Log.d(TAG, "writeToRealm: text: " + text);
+        MySharedPreferences preferences = MySharedPreferences.getInstance(getApplicationContext());
         TransactionMessageRealm transaction = new TransactionMessageRealm(getApplicationContext());
         MessageRealm messageRealm = new MessageRealm();
-        messageRealm.setChat_message_id(-128);
-        messageRealm.setChat_message("" + text);
-        messageRealm.setLanguages_id(1);
+        messageRealm.setChat_message_id(-127);
+        messageRealm.setChat_message_en("" + text);
+        messageRealm.setChat_message_es("" + text);
+        messageRealm.setLanguages_id(preferences.getLanguage());
         messageRealm.setTo_id(to_User.getId());
         messageRealm.setFrom_id(from_CurrentUserRealm.getId());
         messageRealm.setRabbitmq_exchange_name(to_User.getRabbitmq_exchange_name());
@@ -210,15 +256,26 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
         messageActivityScreen.getMessage().set("");
         loadRecyclerView();
         startDraftServices();
+        startTranslation();
         NewMessagesIntentService.
                 startActionNewMessages(getApplicationContext(),
                         "" + from_CurrentUserRealm.getId(), Constants.ChatAPI.DIRECTION_BACKWARD);
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_message, menu);
+        language_SwitchCompat = (SwitchCompat) (menu.findItem(R.id.menu_switch_language).getActionView()).findViewById(R.id.choose_language_SwitchCompat);
+        MySharedPreferences preferences = MySharedPreferences.getInstance(getApplicationContext());
+        Log.d(TAG, "onCreateOptionsMenu: preferences.getLanguage(): " + preferences.getLanguage());
+        if (preferences.getLanguage() == 1) {
+            language_SwitchCompat.setChecked(false);
+        } else if (preferences.getLanguage() == 2) {
+            language_SwitchCompat.setChecked(true);
+        }
+        language_SwitchCompat.setOnCheckedChangeListener(language_Listener);
         return true;
     }
 
@@ -270,6 +327,16 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
     protected void onDestroy() {
         super.onDestroy();
     }
+
+    private void startTranslation() {
+        Intent myIntent = new Intent(getApplicationContext(), GoogleTranslateIntentService.class);
+        startService(myIntent);
+    }
+
+/*    private void startRabbitMq() {
+        Intent myIntent = new Intent(getApplicationContext(), ReceiveIncomingMessages.class);
+        startService(myIntent);
+    }*/
 
     private void startDraftServices() {
         Intent intent = new Intent(getApplicationContext(), SendOutboxMessages.class);
@@ -393,7 +460,8 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
                             MessageRealm messageRealm = new MessageRealm();
                             messageRealm.setFrom_id(rabbitMqResponse.getFrom_id());
                             messageRealm.setTo_id(rabbitMqResponse.getTo_id());
-                            messageRealm.setChat_message(rabbitMqResponse.getChat_message());
+                            messageRealm.setChat_message_en(rabbitMqResponse.getChat_message_en());
+                            messageRealm.setChat_message_es(rabbitMqResponse.getChat_message_es());
                             messageRealm.setChat_message_id(rabbitMqResponse.getChat_message_id());
                             messageRealm.setLanguages_id(rabbitMqResponse.getLanguages_id());
                             messageRealm.setCreated_at(rabbitMqResponse.getCreated_at());
@@ -429,7 +497,8 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
         private class RabbitMqResponse {
             private long from_id;
             private long to_id;
-            private String chat_message;
+            private String chat_message_en;
+            private String chat_message_es;
             private long chat_message_id;
             private int languages_id;
             private long created_at;
@@ -450,12 +519,20 @@ public class MessageActivity extends AppCompatActivity implements SwipeRefreshLa
                 this.to_id = to_id;
             }
 
-            public String getChat_message() {
-                return chat_message;
+            public String getChat_message_en() {
+                return chat_message_en;
             }
 
-            public void setChat_message(String chat_message) {
-                this.chat_message = chat_message;
+            public void setChat_message_en(String chat_message_en) {
+                this.chat_message_en = chat_message_en;
+            }
+
+            public String getChat_message_es() {
+                return chat_message_es;
+            }
+
+            public void setChat_message_es(String chat_message_es) {
+                this.chat_message_es = chat_message_es;
             }
 
             public long getChat_message_id() {

@@ -6,6 +6,6 @@ package rabbitmq.source;
  */
 public interface OnReceiveMessageHandler {
 
-    void onReceiveMessage(byte[] message);
+    void onReceiveMessage(String message);
 
 }

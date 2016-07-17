@@ -30,7 +30,7 @@ public class ListenToRabbitMQ extends ConnectToRabbitMQ {
 
     /**
      * @param EXCHANGE_NAME,       this is the name of the exchange, on which messages are being broadcasted
-     * @param EXCHANGE_TYPE_NAME,       this is the name of the exchange type name, fanout, direct, topic
+     * @param EXCHANGE_TYPE_NAME,  this is the name of the exchange type name, fanout, direct, topic
      * @param ROUTING_BINDING_KEY, this is the name of the routing (binding) key so your queue will only get messages you are interested in
      */
     public ListenToRabbitMQ(String EXCHANGE_NAME, String EXCHANGE_TYPE_NAME, String ROUTING_BINDING_KEY) {
@@ -76,11 +76,11 @@ public class ListenToRabbitMQ extends ConnectToRabbitMQ {
             super.handleDelivery(consumerTag, envelope, properties, body);
             String message = new String(body, "UTF-8");
             Log.d(TAG, "handleDelivery:\n routing_Key" + envelope.getRoutingKey() + "\nMessage: " + message);
-            mOnReceiveMessageHandler.onReceiveMessage(message.getBytes());
+            mOnReceiveMessageHandler.onReceiveMessage(message);
         }
     };
 
-    public boolean isRunning(){
+    public boolean isRunning() {
         return mRunning;
     }
 

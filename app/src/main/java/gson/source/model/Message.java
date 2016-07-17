@@ -5,11 +5,11 @@ package gson.source.model;
  */
 public class Message {
 
-
     private long id;
     private long from_id;
     private long to_id;
-    private String chat_message;
+    private String chat_message_en;
+    private String chat_message_es;
     private long chat_message_id = -128;
     private int languages_id;
     private long created_at;
@@ -43,12 +43,20 @@ public class Message {
         this.to_id = to_id;
     }
 
-    public String getChat_message() {
-        return chat_message;
+    public String getChat_message_en() {
+        return chat_message_en;
     }
 
-    public void setChat_message(String chat_message) {
-        this.chat_message = chat_message;
+    public void setChat_message_en(String chat_message_en) {
+        this.chat_message_en = chat_message_en;
+    }
+
+    public String getChat_message_es() {
+        return chat_message_es;
+    }
+
+    public void setChat_message_es(String chat_message_es) {
+        this.chat_message_es = chat_message_es;
     }
 
     public long getChat_message_id() {
@@ -117,6 +125,6 @@ public class Message {
 
     @Override
     public String toString() {
-        return "Message: "+" created_at: "+created_at+" from_id: "+from_id+", to_id: "+to_id+ ", chat_message: "+ chat_message+ ", chat_message_id: "+ chat_message_id;
+        return "Message: "+" created_at: "+created_at+" from_id: "+from_id+", to_id: "+to_id+ ", chat_message_en: "+ chat_message_en+ ", chat_message_id: "+ chat_message_id;
     }
 }
